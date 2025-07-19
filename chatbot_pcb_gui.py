@@ -9,9 +9,10 @@ DB_CONFIG = {
     "host": "localhost",
     "user": "root",
     "password": "1234",
-    "database": "chatbot_db"
+    "database": "pcb_chatbot"  # Make sure this matches your 
 }
 
+# Connect to DB
 def get_db_connection():
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
@@ -20,6 +21,7 @@ def get_db_connection():
         st.error(f"Error connecting to MySQL: {e}")
         return None
 
+# Check if response already cached
 def get_cached_response(user_query):
     conn = get_db_connection()
     if conn:
@@ -35,6 +37,7 @@ def get_cached_response(user_query):
             return result[0]
     return None
 
+# Log new interaction
 def log_chat(user_query, model_response, total_tokens):
     conn = get_db_connection()
     if conn:
@@ -44,13 +47,13 @@ def log_chat(user_query, model_response, total_tokens):
             INSERT INTO chat_logs (user_query, model_response, total_tokens)
             VALUES (%s, %s, %s)
             """,
-            (user_query, model_response, total_tokens)
+            (user_query, model_response, total_tokens if total_tokens is not None else 0)
         )
         conn.commit()
         cursor.close()
         conn.close()
 
-# Load and prepare context from CSV (only once)
+# Cache the dataset
 @st.cache_data
 def load_context():
     df = pd.read_csv("PCB.csv")
@@ -75,24 +78,28 @@ def load_context():
     ])
     return context_data
 
+# Load dataset
 context_data = load_context()
 
-# LLM client
+# LLM API client
 client = Together(api_key="tgp_v1_2qPAm5jNcqlwanhcusx0I2Ir7K9ECz8z3vmJFWcsGqM")
 
-# Streamlit UI
+# Streamlit App
 st.set_page_config(page_title="PCB Chatbot", page_icon=":cricket_bat_and_ball:", layout="wide")
 st.title("🏏 PCB Chatbot")
 st.write("Ask a question about Pakistan cricket players!")
 
+# Initialize chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+# User input
 user_query = st.text_input("Your question:", key="user_input", on_change=None)
 
 if st.button("Ask") and user_query.strip():
     st.session_state.chat_history.append(("You", user_query))
     cached = get_cached_response(user_query)
+    
     if cached:
         st.session_state.chat_history.append(("Bot", cached))
     else:
@@ -107,17 +114,17 @@ if st.button("Ask") and user_query.strip():
                     ]
                 )
                 answer = response.choices[0].message.content
-                total_tokens = None
-                if hasattr(response, 'usage') and response.usage is not None:
-                    total_tokens = getattr(response.usage, 'total_tokens', None)
+                total_tokens = getattr(response.usage, 'total_tokens', None) if hasattr(response, 'usage') else 0
+                
                 st.session_state.chat_history.append(("Bot", answer))
                 log_chat(user_query, answer, total_tokens)
             except Exception as e:
                 st.session_state.chat_history.append(("Bot", f"Error: {str(e)}"))
 
-# Display chat history
-for sender, message in st.session_state.chat_history:
-    if sender == "You":
-        st.markdown(f"**You:** {message}")
-    else:
-        st.markdown(f"**Bot:** {message}")
+# Show only latest Q&A
+if len(st.session_state.chat_history) >= 2:
+    for sender, message in st.session_state.chat_history[-2:]:
+        st.markdown(f"**{sender}:** {message}")
+elif len(st.session_state.chat_history) == 1:
+    sender, message = st.session_state.chat_history[0]
+    st.markdown(f"**{sender}:** {message}")
