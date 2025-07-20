@@ -1,5 +1,5 @@
 Flask==2.3.2
-mysql-connector-python
-pandas
-together-sdk
-gunicorn 
+mysql-connector-python==8.0.33
+pandas==2.0.3
+together==0.2.11
+gunicorn==21.2.0 
