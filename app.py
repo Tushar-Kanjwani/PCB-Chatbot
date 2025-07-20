@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, session
 from chatbot_core import answer_query
+import os
 
 app = Flask(__name__)
-app.secret_key = "REPLACE_WITH_A_RANDOM_SECRET_KEY"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "REPLACE_WITH_A_RANDOM_SECRET_KEY")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -24,6 +25,4 @@ def index():
 
     return render_template("index.html", chat_history=session["chat_history"])
 
-if __name__ == "__main__":
-    # accessible at http://127.0.0.1:5000/
-    app.run(debug=True)
+# Vercel deployment - no need for app.run() in serverless environment
