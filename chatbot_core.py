@@ -1,6 +1,5 @@
-import mysql.connector
-from mysql.connector import Error
-import pandas as pd
+import pymysql
+import csv
 from functools import lru_cache
 from together import Together
 import os
@@ -18,8 +17,8 @@ DB_CONFIG = {
 def get_db_connection():
     """Establishes a new connection to the MySQL database."""
     try:
-        return mysql.connector.connect(**DB_CONFIG)
-    except Error as e:
+        return pymysql.connect(**DB_CONFIG)
+    except Exception as e:
         print(f"[DB ERROR] {e}")
         return None
 
@@ -67,22 +66,25 @@ def log_chat(user_query: str, model_response: str, total_tokens: int):
 def load_context():
     """Loads and formats the PCB.csv into a single text blob."""
     try:
-        df = pd.read_csv("PCB.csv")
-        # drop any unwanted unnamed columns
-        df = df.drop(columns=[c for c in df.columns if c.startswith("Unnamed")], errors="ignore")
-        mapping = {
-            "Player":"Player","Starting Year":"First Match","Ending Year":"Last Match",
-            "Matches Played":"Matches","Innings Batted":"Innings","Not Outs":"Not Outs",
-            "Runs Scored":"Runs","Highest Score":"Highest Score","Average Score":"Average",
-            "Centuries":"100s","Half-centuries":"50s","Ducks":"Ducks"
-        }
         lines = []
-        for _, row in df.iterrows():
-            parts = []
-            for col in df.columns:
-                label = mapping.get(col, col)
-                parts.append(f"{label}: {row[col]}")
-            lines.append(", ".join(parts))
+        with open("PCB.csv", 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            mapping = {
+                "Player":"Player","Starting Year":"First Match","Ending Year":"Last Match",
+                "Matches Played":"Matches","Innings Batted":"Innings","Not Outs":"Not Outs",
+                "Runs Scored":"Runs","Highest Score":"Highest Score","Average Score":"Average",
+                "Centuries":"100s","Half-centuries":"50s","Ducks":"Ducks"
+            }
+            
+            for row in reader:
+                parts = []
+                for col, value in row.items():
+                    # Skip unnamed columns
+                    if col.startswith("Unnamed"):
+                        continue
+                    label = mapping.get(col, col)
+                    parts.append(f"{label}: {value}")
+                lines.append(", ".join(parts))
         return "\n".join(lines)
     except Exception as e:
         print(f"[CONTEXT ERROR] {e}")
