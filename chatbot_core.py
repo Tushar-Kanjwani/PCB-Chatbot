@@ -8,19 +8,13 @@ import os
 # For Vercel deployment, you'll need to use a cloud database service
 # like PlanetScale, Railway, or AWS RDS
 DB_CONFIG = {
-<<<<<<< HEAD
-    "host": "mysql.railway.internal",
-    "user": "root",
-    "password": "KjGYJelGnozfTkOraNeoxRUFwoCRGLpX",
-    "database": "railway",
-    "port": 3306
-=======
-    "host": os.getenv("DB_HOST", "localhost"),
+    "host": os.getenv("DB_HOST", "mysql.railway.internal"),
     "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", "1234"),
-    "database": os.getenv("DB_NAME", "pcb_chatbot")
->>>>>>> 52be1fae265687aea3057e11625100c801638a3e
+    "password": os.getenv("DB_PASSWORD", "KjGYJelGnozfTkOraNeoxRUFwoCRGLpX"),
+    "database": os.getenv("DB_NAME", "railway")
 }
+
+
 
 def get_db_connection():
     """Establishes a new connection to the MySQL database."""
@@ -132,17 +126,9 @@ def answer_query(user_query: str) -> tuple[str, int]:
         answer = resp.choices[0].message.content
         total = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
 
-<<<<<<< HEAD
-    # 3) Log and return
-    log_chat(user_query, answer, total)
-    return answer, total
-
-
-=======
         # 3) Log and return
         log_chat(user_query, answer, total)
         return answer, total
     except Exception as e:
         print(f"[LLM ERROR] {e}")
         return "Sorry, I'm having trouble processing your request right now. Please try again later.", 0
->>>>>>> 52be1fae265687aea3057e11625100c801638a3e
