@@ -26,3 +26,9 @@ def index():
     return render_template("index.html", chat_history=session["chat_history"])
 
 # Vercel deployment - no need for app.run() in serverless environment
+
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
