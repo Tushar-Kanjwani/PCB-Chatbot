@@ -3,13 +3,15 @@ from mysql.connector import Error
 import pandas as pd
 from functools import lru_cache
 from together import Together
+import os
 
 # --- MySQL configuration (adjust as needed) ---
 DB_CONFIG = {
-    "host": "localhost",
+    "host": "mysql.railway.internal",
     "user": "root",
-    "password": "1234",
-    "database": "pcb_chatbot"
+    "password": "KjGYJelGnozfTkOraNeoxRUFwoCRGLpX",
+    "database": "railway",
+    "port": 3306
 }
 
 def get_db_connection():
@@ -107,3 +109,5 @@ def answer_query(user_query: str) -> tuple[str, int]:
     # 3) Log and return
     log_chat(user_query, answer, total)
     return answer, total
+
+
